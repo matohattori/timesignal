@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Timesignal</string>
+    <string name="quiet_hours_title">お休み時間</string>
+    <string name="quiet_hours_enabled">お休み時間を有効にする</string>
+    <string name="quiet_hours_active">現在お休み時間中</string>
+    <string name="quiet_hours_start">開始</string>
+    <string name="quiet_hours_end">終了</string>
+    <string name="duration_suffix">ms</string>
+</resources>
