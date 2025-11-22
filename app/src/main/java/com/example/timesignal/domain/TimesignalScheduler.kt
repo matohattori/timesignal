@@ -4,7 +4,7 @@ import android.app.AlarmManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
-import com.example.timesignal.QuarterChimeReceiver
+import com.example.timesignal.TimesignalService
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
 
@@ -23,16 +23,26 @@ class TimesignalScheduler(
     }
 
     fun scheduleNext(slot: QuarterSlot, fromTime: ZonedDateTime = ZonedDateTime.now()) {
-        val nextTrigger = calculateNextTrigger(slot, fromTime)
-        val intent = Intent(context, QuarterChimeReceiver::class.java).apply {
-            putExtra(QuarterChimeReceiver.EXTRA_SLOT, slot.name)
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+            if (alarmManager?.canScheduleExactAlarms() == false) {
+                return
+            }
         }
-        val pendingIntent = PendingIntent.getBroadcast(
+
+        val nextTrigger = calculateNextTrigger(slot, fromTime)
+        // Intent now goes directly to the Service, not the Receiver
+        val intent = Intent(context, TimesignalService::class.java).apply {
+            putExtra(TimesignalService.EXTRA_SLOT, slot.name)
+        }
+
+        // Use getForegroundService to directly start the service from the background
+        val pendingIntent = PendingIntent.getForegroundService(
             context,
             slot.ordinal,
             intent,
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+
         alarmManager?.setExactAndAllowWhileIdle(
             AlarmManager.RTC_WAKEUP,
             nextTrigger.toInstant().toEpochMilli(),
@@ -45,8 +55,8 @@ class TimesignalScheduler(
     }
 
     private fun cancel(slot: QuarterSlot) {
-        val intent = Intent(context, QuarterChimeReceiver::class.java)
-        val pendingIntent = PendingIntent.getBroadcast(
+        val intent = Intent(context, TimesignalService::class.java)
+        val pendingIntent = PendingIntent.getForegroundService(
             context,
             slot.ordinal,
             intent,

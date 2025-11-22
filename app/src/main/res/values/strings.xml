@@ -1,9 +1,8 @@
 <resources>
     <string name="app_name">Timesignal</string>
-    <string name="quiet_hours_title">お休み時間</string>
-    <string name="quiet_hours_enabled">お休み時間を有効にする</string>
-    <string name="quiet_hours_active">現在お休み時間中</string>
-    <string name="quiet_hours_start">開始</string>
-    <string name="quiet_hours_end">終了</string>
     <string name="duration_suffix">ms</string>
+    <string name="permission_required_warning">時報を鳴らすには、正確なアラームの権限を許可してください。</string>
+    <string name="notification_channel_name">時報サービス</string>
+    <string name="notification_channel_description">時報を鳴らすためにバックグラウンドで実行されます。</string>
+    <string name="notification_title">時報サービス実行中</string>
 </resources>
