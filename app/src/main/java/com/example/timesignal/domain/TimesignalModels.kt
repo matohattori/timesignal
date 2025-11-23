@@ -57,11 +57,16 @@ object VibrationPatterns {
     fun getVibrationEffect(patternId: String, hasAmplitudeControl: Boolean): VibrationEffect? {
         val pattern = PATTERNS[patternId] ?: return null
 
-        // HYPOTHESIS: The device's amplitude control implementation is buggy.
-        // To fix this, we ignore amplitude control and use the simpler createWaveform version
-        // for all modern devices. This version only uses timings.
+        // Use amplitude-aware createWaveform when amplitude control is available.
+        // This is necessary for multi-part waveforms (SHORT_2, LONG_2) to work correctly.
+        // The amplitude array defines when the device should vibrate (255) and when it should
+        // be off (0), allowing for proper pauses between vibrations.
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            VibrationEffect.createWaveform(pattern.timings, -1)
+            if (hasAmplitudeControl) {
+                VibrationEffect.createWaveform(pattern.timings, pattern.amplitudes, -1)
+            } else {
+                VibrationEffect.createWaveform(pattern.timings, -1)
+            }
         } else {
             // Older APIs don't have amplitude control anyway.
             @Suppress("DEPRECATION")
