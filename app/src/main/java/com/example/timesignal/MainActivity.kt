@@ -30,13 +30,15 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         val app = application as TimesignalApplication
-        val factory = TimesignalViewModel.Factory(
-            repository = app.container.repository,
-            scheduler = app.container.scheduler,
-            vibrator = app.container.vibrator,
-            alarmManager = getSystemService<AlarmManager>()!!,
-        )
+
         setContent {
+            val factory = TimesignalViewModel.Factory(
+                repository = app.container.repository,
+                scheduler = app.container.scheduler,
+                vibrator = app.container.vibrator,
+                alarmManager = getSystemService<AlarmManager>()!!,
+            )
+
             TimesignalTheme {
                 val viewModel: TimesignalViewModel = viewModel(factory = factory)
                 val uiState = viewModel.uiState.collectAsStateWithLifecycle()
@@ -45,8 +47,8 @@ class MainActivity : ComponentActivity() {
                     onToggleQuarter = { slot: QuarterSlot, enabled: Boolean ->
                         viewModel.setQuarterEnabled(slot, enabled)
                     },
-                    onSelectPattern = { slot: QuarterSlot, patternId ->
-                        viewModel.setQuarterPattern(slot, patternId)
+                    onSelectVibrationPattern = { slot: QuarterSlot, patternId ->
+                        viewModel.setVibrationPattern(slot, patternId)
                     },
                     onNavigateToExactAlarmSettings = {
                         startActivity(

@@ -9,7 +9,6 @@ import com.example.timesignal.domain.QuarterSettings
 import com.example.timesignal.domain.QuarterSlot
 import com.example.timesignal.domain.TimesignalRepository
 import com.example.timesignal.domain.TimesignalState
-import com.example.timesignal.domain.VibrationPatterns
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -22,7 +21,7 @@ class TimesignalPreferencesRepository(
         val quarters = QuarterSlot.values().associateWith { slot ->
             QuarterSettings(
                 enabled = preferences[enabledKey(slot)] ?: false,
-                patternId = preferences[patternKey(slot)] ?: VibrationPatterns.default.id,
+                vibrationPatternId = preferences[patternKey(slot)] ?: "SHORT_1",
             )
         }
 
@@ -37,10 +36,9 @@ class TimesignalPreferencesRepository(
         }
     }
 
-    override suspend fun setQuarterPattern(slot: QuarterSlot, patternId: String) {
-        val targetPattern = VibrationPatterns.findById(patternId)
+    override suspend fun setVibrationPattern(slot: QuarterSlot, patternId: String) {
         dataStore.edit { prefs ->
-            prefs[patternKey(slot)] = targetPattern.id
+            prefs[patternKey(slot)] = patternId
         }
     }
 

@@ -28,13 +28,13 @@ import com.example.timesignal.R
 import com.example.timesignal.domain.QuarterSettings
 import com.example.timesignal.domain.QuarterSlot
 import com.example.timesignal.domain.TimesignalState
-import com.example.timesignal.domain.VibrationPattern
+import com.example.timesignal.domain.VibrationPatterns
 
 @Composable
 fun TimesignalScreen(
     state: TimesignalState,
     onToggleQuarter: (QuarterSlot, Boolean) -> Unit,
-    onSelectPattern: (QuarterSlot, String) -> Unit,
+    onSelectVibrationPattern: (QuarterSlot, String) -> Unit,
     onNavigateToExactAlarmSettings: () -> Unit,
 ) {
     Scaffold(timeText = { }) {
@@ -57,9 +57,8 @@ fun TimesignalScreen(
                 QuarterCard(
                     slot = slot,
                     settings = settings,
-                    patterns = state.availablePatterns,
                     onToggle = { onToggleQuarter(slot, it) },
-                    onPatternSelected = { onSelectPattern(slot, it) },
+                    onPatternSelected = { onSelectVibrationPattern(slot, it) },
                 )
             }
         }
@@ -70,7 +69,6 @@ fun TimesignalScreen(
 private fun QuarterCard(
     slot: QuarterSlot,
     settings: QuarterSettings,
-    patterns: List<VibrationPattern>,
     onToggle: (Boolean) -> Unit,
     onPatternSelected: (String) -> Unit,
 ) {
@@ -83,9 +81,9 @@ private fun QuarterCard(
                 Column(modifier = Modifier.weight(1f)) {
                     Text(text = slot.displayName, style = MaterialTheme.typography.title3)
                     if (settings.enabled) {
-                        val selectedPattern = patterns.find { it.id == settings.patternId }
-                        if (selectedPattern != null) {
-                            Text(text = selectedPattern.label, style = MaterialTheme.typography.caption1)
+                        val currentPatternName = VibrationPatterns.PATTERNS[settings.vibrationPatternId]?.displayName
+                        if (currentPatternName != null) {
+                            Text(text = currentPatternName, style = MaterialTheme.typography.caption1)
                         }
                     }
                 }
@@ -97,15 +95,15 @@ private fun QuarterCard(
                     modifier = Modifier.horizontalScroll(rememberScrollState()),
                     horizontalArrangement = Arrangement.spacedBy(4.dp),
                 ) {
-                    patterns.forEach { pattern ->
-                        val colors = if (pattern.id == settings.patternId) {
+                    VibrationPatterns.PATTERNS.forEach { (patternId, pattern) ->
+                        val colors = if (patternId == settings.vibrationPatternId) {
                             ChipDefaults.secondaryChipColors()
                         } else {
                             ChipDefaults.chipColors()
                         }
                         CompactChip(
-                            onClick = { onPatternSelected(pattern.id) },
-                            label = { Text(text = pattern.label) },
+                            onClick = { onPatternSelected(patternId) },
+                            label = { Text(text = pattern.displayName) },
                             enabled = true,
                             colors = colors,
                         )

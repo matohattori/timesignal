@@ -1,11 +1,21 @@
 package com.example.timesignal.domain
 
+import android.os.Build
+import android.os.VibrationEffect
+
+/**
+ * Represents the entire state of the Timesignal application.
+ * `availableDurations` is removed to align with the new vibration pattern system.
+ */
 data class TimesignalState(
     val quarters: Map<QuarterSlot, QuarterSettings> = emptyMap(),
-    val availablePatterns: List<VibrationPattern> = VibrationPatterns.all,
     val canScheduleExactAlarms: Boolean = true,
 )
 
+/**
+ * Defines the trigger points within an hour.
+ * The `displayName` is used for the UI and `minute` is for scheduling calculations.
+ */
 enum class QuarterSlot(val minute: Int, val displayName: String) {
     ZERO(0, "毎時0分"),
     FIFTEEN(15, "毎時15分"),
@@ -13,46 +23,46 @@ enum class QuarterSlot(val minute: Int, val displayName: String) {
     FORTY_FIVE(45, "毎時45分"),
 }
 
+/**
+ * Holds settings for each quarter slot.
+ * Changed from `durationMs` to `vibrationPatternId` to support custom patterns.
+ */
 data class QuarterSettings(
     val enabled: Boolean = false,
-    val patternId: String = VibrationPatterns.default.id,
+    val vibrationPatternId: String = "SHORT_1" // Default to a valid pattern
 )
 
+/**
+ * A data class to hold all information about a vibration pattern.
+ */
 data class VibrationPattern(
-    val id: String,
-    val label: String,
+    val displayName: String,
     val timings: LongArray,
+    val amplitudes: IntArray
 )
 
+/**
+ * A singleton object that centralizes all vibration pattern definitions and logic.
+ */
 object VibrationPatterns {
-    private const val SHORT_VIBRATION_MS = 200L
-    private const val LONG_VIBRATION_MS = 800L
-    private const val GAP_MS = 200L
-
-    val all: List<VibrationPattern> = listOf(
-        VibrationPattern(
-            id = "SHORT_1",
-            label = "短1",
-            timings = longArrayOf(0, SHORT_VIBRATION_MS),
-        ),
-        VibrationPattern(
-            id = "SHORT_2",
-            label = "短2",
-            timings = longArrayOf(0, SHORT_VIBRATION_MS, GAP_MS, SHORT_VIBRATION_MS),
-        ),
-        VibrationPattern(
-            id = "LONG_1",
-            label = "長1",
-            timings = longArrayOf(0, LONG_VIBRATION_MS),
-        ),
-        VibrationPattern(
-            id = "LONG_2",
-            label = "長2",
-            timings = longArrayOf(0, SHORT_VIBRATION_MS, GAP_MS, LONG_VIBRATION_MS),
-        ),
+    val PATTERNS = linkedMapOf(
+        "SHORT_1" to VibrationPattern("短1", longArrayOf(0, 100), intArrayOf(0, 255)),
+        "SHORT_2" to VibrationPattern("短2", longArrayOf(0, 100, 200, 100), intArrayOf(0, 255, 0, 255)),
+        "LONG_1"  to VibrationPattern("長1", longArrayOf(0, 400), intArrayOf(0, 255)),
+        "LONG_2"  to VibrationPattern("長2", longArrayOf(0, 100, 200, 400), intArrayOf(0, 255, 0, 255))
     )
 
-    val default: VibrationPattern = all.first()
+    fun getVibrationEffect(patternId: String): VibrationEffect? {
+        val pattern = PATTERNS[patternId] ?: return null
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            VibrationEffect.createWaveform(pattern.timings, pattern.amplitudes, -1)
+        } else {
+            @Suppress("DEPRECATION")
+            VibrationEffect.createWaveform(pattern.timings, -1)
+        }
+    }
 
-    fun findById(id: String?): VibrationPattern = all.find { it.id == id } ?: default
+    fun getPatternDuration(patternId: String): Long {
+        return PATTERNS[patternId]?.timings?.sum() ?: 0L
+    }
 }

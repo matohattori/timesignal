@@ -6,7 +6,6 @@ import android.content.Intent
 import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.example.timesignal.domain.QuarterSlot
-import com.example.timesignal.domain.VibrationPatterns
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -34,8 +33,7 @@ class TimesignalService : Service() {
                         val state = app.container.repository.getLatestState()
                         val slotSettings = state.quarters[slot]
                         if (slotSettings?.enabled == true) {
-                            val pattern = VibrationPatterns.findById(slotSettings.patternId)
-                            app.container.vibrator.vibrate(pattern)
+                            app.container.vibrator.vibrate(slotSettings.vibrationPatternId)
                         }
                         app.container.scheduler.scheduleNext(slot)
                     }

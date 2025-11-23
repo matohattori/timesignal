@@ -6,7 +6,7 @@ import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
-import com.example.timesignal.domain.VibrationPattern
+import com.example.timesignal.domain.VibrationPatterns
 
 class TimesignalVibrator(private val context: Context) {
     private val vibrator: Vibrator? = when {
@@ -14,24 +14,26 @@ class TimesignalVibrator(private val context: Context) {
             val manager = context.getSystemService(VibratorManager::class.java)
             manager?.defaultVibrator
         }
+
         else -> context.getSystemService(Context.VIBRATOR_SERVICE) as Vibrator
     }
 
-    private val powerManager: PowerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
+    private val powerManager: PowerManager =
+        context.getSystemService(Context.POWER_SERVICE) as PowerManager
 
-    fun vibrate(pattern: VibrationPattern) {
-        val totalDuration = pattern.timings.sum() + 200L
+    fun vibrate(patternId: String) {
+        val effect = VibrationPatterns.getVibrationEffect(patternId)
+        val duration = VibrationPatterns.getPatternDuration(patternId)
+
+        // A null effect means the pattern is invalid; do nothing.
+        if (effect == null) return
+
         val wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Timesignal::VibrationWakeLock")
         try {
-            wakeLock.acquire(totalDuration) // Acquire lock with a timeout
+            // Acquire lock with a timeout slightly longer than the vibration pattern.
+            wakeLock.acquire(duration + 200)
 
-            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val effect = VibrationEffect.createWaveform(pattern.timings, -1)
-                vibrator?.vibrate(effect)
-            } else {
-                @Suppress("DEPRECATION")
-                vibrator?.vibrate(pattern.timings, -1)
-            }
+            vibrator?.vibrate(effect)
         } finally {
             if (wakeLock.isHeld) {
                 wakeLock.release() // Ensure the lock is always released

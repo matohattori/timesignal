@@ -44,20 +44,18 @@ class TimesignalViewModel(
 
             val wasEnabled = previous.quarters[slot]?.enabled == true
             if (!wasEnabled && enabled) {
-                val patternId = latest.quarters[slot]?.patternId ?: return@launch
-                val pattern = VibrationPatterns.findById(patternId)
-                vibrator.vibrate(pattern)
+                val patternId = latest.quarters[slot]?.vibrationPatternId ?: return@launch
+                vibrator.vibrate(patternId)
             }
         }
     }
 
-    fun setQuarterPattern(slot: QuarterSlot, patternId: String) {
+    fun setVibrationPattern(slot: QuarterSlot, patternId: String) {
         viewModelScope.launch {
-            repository.setQuarterPattern(slot, patternId)
+            repository.setVibrationPattern(slot, patternId)
             val latest = repository.getLatestState()
             scheduler.reschedule(latest)
-            val pattern = VibrationPatterns.findById(patternId)
-            vibrator.vibrate(pattern)
+            vibrator.vibrate(patternId)
         }
     }
 
