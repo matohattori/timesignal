@@ -61,15 +61,10 @@ object VibrationPatterns {
         // This is necessary for multi-part waveforms (SHORT_2, LONG_2) to work correctly.
         // The amplitude array defines when the device should vibrate (255) and when it should
         // be off (0), allowing for proper pauses between vibrations.
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            if (hasAmplitudeControl) {
-                VibrationEffect.createWaveform(pattern.timings, pattern.amplitudes, -1)
-            } else {
-                VibrationEffect.createWaveform(pattern.timings, -1)
-            }
+        // Note: VibrationEffect requires API 26+, but our minSdk is 30, so no version check needed.
+        return if (hasAmplitudeControl) {
+            VibrationEffect.createWaveform(pattern.timings, pattern.amplitudes, -1)
         } else {
-            // Older APIs don't have amplitude control anyway.
-            @Suppress("DEPRECATION")
             VibrationEffect.createWaveform(pattern.timings, -1)
         }
     }
