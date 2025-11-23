@@ -58,8 +58,9 @@ object VibrationPatterns {
         val pattern = PATTERNS[patternId] ?: return null
 
         // Always use amplitude-based waveform for proper multi-part pattern support.
-        // Even if hasAmplitudeControl is false, this provides better compatibility
-        // with Wear OS devices for complex patterns like SHORT_2 and LONG_2.
+        // The hasAmplitudeControl parameter is currently unused but kept for API compatibility.
+        // Even on devices where hasAmplitudeControl might be false, using the amplitude-based
+        // API provides better compatibility with Wear OS for complex patterns like SHORT_2 and LONG_2.
         return VibrationEffect.createWaveform(pattern.timings, pattern.amplitudes, -1)
     }
 
