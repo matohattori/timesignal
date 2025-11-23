@@ -65,6 +65,7 @@ object VibrationPatterns {
         return if (hasAmplitudeControl) {
             VibrationEffect.createWaveform(pattern.timings, pattern.amplitudes, -1)
         } else {
+            // Fallback for devices without amplitude control - uses timing only
             VibrationEffect.createWaveform(pattern.timings, -1)
         }
     }
