@@ -46,17 +46,24 @@ data class VibrationPattern(
  */
 object VibrationPatterns {
     val PATTERNS = linkedMapOf(
-        "SHORT_1" to VibrationPattern("短1", longArrayOf(0, 100), intArrayOf(0, 255)),
-        "SHORT_2" to VibrationPattern("短2", longArrayOf(0, 100, 200, 100), intArrayOf(0, 255, 0, 255)),
-        "LONG_1"  to VibrationPattern("長1", longArrayOf(0, 400), intArrayOf(0, 255)),
-        "LONG_2"  to VibrationPattern("長2", longArrayOf(0, 100, 200, 400), intArrayOf(0, 255, 0, 255))
+        // By changing the initial 0ms delay to 1ms, we can work around a bug in some
+        // vibrator drivers that causes multi-part waveforms to fail.
+        "SHORT_1" to VibrationPattern("短1", longArrayOf(1, 100), intArrayOf(0, 255)),
+        "SHORT_2" to VibrationPattern("短2", longArrayOf(1, 100, 200, 100), intArrayOf(0, 255, 0, 255)),
+        "LONG_1"  to VibrationPattern("長1", longArrayOf(1, 400), intArrayOf(0, 255)),
+        "LONG_2"  to VibrationPattern("長2", longArrayOf(1, 100, 200, 400), intArrayOf(0, 255, 0, 255))
     )
 
-    fun getVibrationEffect(patternId: String): VibrationEffect? {
+    fun getVibrationEffect(patternId: String, hasAmplitudeControl: Boolean): VibrationEffect? {
         val pattern = PATTERNS[patternId] ?: return null
+
+        // HYPOTHESIS: The device's amplitude control implementation is buggy.
+        // To fix this, we ignore amplitude control and use the simpler createWaveform version
+        // for all modern devices. This version only uses timings.
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            VibrationEffect.createWaveform(pattern.timings, pattern.amplitudes, -1)
+            VibrationEffect.createWaveform(pattern.timings, -1)
         } else {
+            // Older APIs don't have amplitude control anyway.
             @Suppress("DEPRECATION")
             VibrationEffect.createWaveform(pattern.timings, -1)
         }
