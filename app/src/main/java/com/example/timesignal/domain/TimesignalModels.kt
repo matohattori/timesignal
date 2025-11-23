@@ -57,10 +57,10 @@ object VibrationPatterns {
     fun getVibrationEffect(patternId: String, hasAmplitudeControl: Boolean): VibrationEffect? {
         val pattern = PATTERNS[patternId] ?: return null
 
-        // Use timing-only waveform for all devices for consistency.
-        // The timings array alternates between OFF and ON durations: [off, on, off, on, ...]
-        // This approach works more reliably across different Wear OS devices.
-        return VibrationEffect.createWaveform(pattern.timings, -1)
+        // Always use amplitude-based waveform for proper multi-part pattern support.
+        // Even if hasAmplitudeControl is false, this provides better compatibility
+        // with Wear OS devices for complex patterns like SHORT_2 and LONG_2.
+        return VibrationEffect.createWaveform(pattern.timings, pattern.amplitudes, -1)
     }
 
     fun getPatternDuration(patternId: String): Long {
