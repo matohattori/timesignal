@@ -5,12 +5,15 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
+import com.example.timesignal.domain.CustomVibrationPattern
 import com.example.timesignal.domain.QuarterSettings
 import com.example.timesignal.domain.QuarterSlot
 import com.example.timesignal.domain.TimesignalRepository
 import com.example.timesignal.domain.TimesignalState
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 
 class TimesignalPreferencesRepository(
@@ -30,7 +33,7 @@ class TimesignalPreferencesRepository(
         TimesignalState(
             quarters = quarters,
         )
-    }
+    }.flowOn(Dispatchers.Default)
 
     override suspend fun setQuarterEnabled(slot: QuarterSlot, enabled: Boolean) {
         dataStore.edit { prefs ->
