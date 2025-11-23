@@ -46,28 +46,21 @@ data class VibrationPattern(
  */
 object VibrationPatterns {
     val PATTERNS = linkedMapOf(
-        // By changing the initial 0ms delay to 1ms, we can work around a bug in some
-        // vibrator drivers that causes multi-part waveforms to fail.
-        "SHORT_1" to VibrationPattern("短1", longArrayOf(1, 100), intArrayOf(0, 255)),
-        "SHORT_2" to VibrationPattern("短2", longArrayOf(1, 100, 200, 100), intArrayOf(0, 255, 0, 255)),
-        "LONG_1"  to VibrationPattern("長1", longArrayOf(1, 400), intArrayOf(0, 255)),
-        "LONG_2"  to VibrationPattern("長2", longArrayOf(1, 100, 200, 400), intArrayOf(0, 255, 0, 255))
+        // Patterns use timing-only mode where arrays alternate: [off, on, off, on, ...]
+        // Initial 0ms delay, then vibration, then pause, then vibration again for multi-part patterns
+        "SHORT_1" to VibrationPattern("短1", longArrayOf(0, 100), intArrayOf(0, 255)),
+        "SHORT_2" to VibrationPattern("短2", longArrayOf(0, 100, 100, 100), intArrayOf(0, 255, 0, 255)),
+        "LONG_1"  to VibrationPattern("長1", longArrayOf(0, 400), intArrayOf(0, 255)),
+        "LONG_2"  to VibrationPattern("長2", longArrayOf(0, 100, 100, 400), intArrayOf(0, 255, 0, 255))
     )
 
     fun getVibrationEffect(patternId: String, hasAmplitudeControl: Boolean): VibrationEffect? {
         val pattern = PATTERNS[patternId] ?: return null
 
-        // Use amplitude-aware createWaveform when amplitude control is available.
-        // This is necessary for multi-part waveforms (SHORT_2, LONG_2) to work correctly.
-        // The amplitude array defines when the device should vibrate (255) and when it should
-        // be off (0), allowing for proper pauses between vibrations.
-        // Note: VibrationEffect requires API 26+, but our minSdk is 30, so no version check needed.
-        return if (hasAmplitudeControl) {
-            VibrationEffect.createWaveform(pattern.timings, pattern.amplitudes, -1)
-        } else {
-            // Fallback for devices without amplitude control - uses timing only
-            VibrationEffect.createWaveform(pattern.timings, -1)
-        }
+        // Use timing-only waveform for all devices for consistency.
+        // The timings array alternates between OFF and ON durations: [off, on, off, on, ...]
+        // This approach works more reliably across different Wear OS devices.
+        return VibrationEffect.createWaveform(pattern.timings, -1)
     }
 
     fun getPatternDuration(patternId: String): Long {
