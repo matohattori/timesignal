@@ -39,6 +39,8 @@ import com.example.timesignal.domain.QuarterSlot
 import com.example.timesignal.domain.TimesignalState
 import com.example.timesignal.domain.VibrationPatterns
 
+private val LABEL_WIDTH = 60.dp
+
 @Composable
 fun TimesignalScreen(
     state: TimesignalState,
@@ -239,7 +241,7 @@ private fun DurationSelector(
         Text(
             text = label,
             style = MaterialTheme.typography.caption1,
-            modifier = Modifier.width(60.dp)
+            modifier = Modifier.width(LABEL_WIDTH)
         )
         
         Spacer(modifier = Modifier.width(4.dp))

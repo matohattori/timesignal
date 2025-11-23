@@ -79,16 +79,20 @@ class TimesignalViewModel(
                     if (settings.customPattern != null) {
                         vibrator.vibrateCustom(settings.customPattern)
                         // Wait for vibration to complete
-                        kotlinx.coroutines.delay(VibrationPatterns.getCustomPatternDuration(settings.customPattern) + 200)
+                        kotlinx.coroutines.delay(VibrationPatterns.getCustomPatternDuration(settings.customPattern) + VIBRATION_BUFFER_DELAY_MS)
                     } else {
                         vibrator.vibrate(settings.vibrationPatternId)
-                        kotlinx.coroutines.delay(VibrationPatterns.getPatternDuration(settings.vibrationPatternId) + 200)
+                        kotlinx.coroutines.delay(VibrationPatterns.getPatternDuration(settings.vibrationPatternId) + VIBRATION_BUFFER_DELAY_MS)
                     }
                 }
             } finally {
                 _isTestingVibration.value = false
             }
         }
+    }
+
+    companion object {
+        private const val VIBRATION_BUFFER_DELAY_MS = 200L
     }
 
     class Factory(
