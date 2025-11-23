@@ -5,4 +5,10 @@
     <string name="notification_channel_name">時報サービス</string>
     <string name="notification_channel_description">時報を鳴らすためにバックグラウンドで実行されます。</string>
     <string name="notification_title">時報サービス実行中</string>
+
+    <!-- Quarter display names -->
+    <string name="quarter_00">00分</string>
+    <string name="quarter_15">15分</string>
+    <string name="quarter_30">30分</string>
+    <string name="quarter_45">45分</string>
 </resources>

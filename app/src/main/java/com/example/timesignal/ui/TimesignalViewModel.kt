@@ -10,6 +10,7 @@ import com.example.timesignal.domain.QuarterSlot
 import com.example.timesignal.domain.TimesignalRepository
 import com.example.timesignal.domain.TimesignalScheduler
 import com.example.timesignal.domain.TimesignalState
+import com.example.timesignal.domain.VibrationPatterns
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
@@ -43,18 +44,18 @@ class TimesignalViewModel(
 
             val wasEnabled = previous.quarters[slot]?.enabled == true
             if (!wasEnabled && enabled) {
-                val duration = latest.quarters[slot]?.durationMs ?: return@launch
-                vibrator.vibrate(duration)
+                val patternId = latest.quarters[slot]?.vibrationPatternId ?: return@launch
+                vibrator.vibrate(patternId)
             }
         }
     }
 
-    fun setQuarterDuration(slot: QuarterSlot, durationMs: Int) {
+    fun setVibrationPattern(slot: QuarterSlot, patternId: String) {
         viewModelScope.launch {
-            repository.setQuarterDuration(slot, durationMs)
+            repository.setVibrationPattern(slot, patternId)
             val latest = repository.getLatestState()
             scheduler.reschedule(latest)
-            vibrator.vibrate(durationMs)
+            vibrator.vibrate(patternId)
         }
     }
 
