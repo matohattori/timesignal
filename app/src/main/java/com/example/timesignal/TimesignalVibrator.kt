@@ -39,4 +39,18 @@ class TimesignalVibrator(private val context: Context) {
 
         vibrator?.vibrate(effect)
     }
+
+    fun vibrateCustom(customPattern: com.example.timesignal.domain.CustomVibrationPattern) {
+        vibrator?.cancel()
+
+        val effect = VibrationPatterns.getCustomVibrationEffect(customPattern)
+        val duration = VibrationPatterns.getCustomPatternDuration(customPattern)
+
+        if (effect == null || duration == 0L) return
+
+        val wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Timesignal::VibrationWakeLock")
+        wakeLock.acquire(duration + 200)
+
+        vibrator?.vibrate(effect)
+    }
 }
