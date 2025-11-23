@@ -108,35 +108,43 @@ object VibrationPatterns {
     /**
      * Creates a VibrationEffect from a CustomVibrationPattern.
      * Builds the timing array dynamically based on which fields are set.
+     * Uses explicit amplitudes to work around device-specific bugs with multi-segment waveforms.
      */
     fun getCustomVibrationEffect(customPattern: CustomVibrationPattern): VibrationEffect? {
         val timings = mutableListOf<Long>()
+        val amplitudes = mutableListOf<Int>()
         
         // Start with 1ms delay to work around vibrator driver bugs
         timings.add(1)
+        amplitudes.add(0)  // OFF
         
         // Add vib1 (always present)
         timings.add(customPattern.vib1.toLong())
+        amplitudes.add(255)  // ON
         
         // Add pause1 and subsequent segments if present
         if (customPattern.pause1 != null) {
             timings.add(customPattern.pause1.toLong())
+            amplitudes.add(0)  // OFF
             
             if (customPattern.vib2 != null) {
                 timings.add(customPattern.vib2.toLong())
+                amplitudes.add(255)  // ON
                 
                 if (customPattern.pause2 != null) {
                     timings.add(customPattern.pause2.toLong())
+                    amplitudes.add(0)  // OFF
                     
                     if (customPattern.vib3 != null) {
                         timings.add(customPattern.vib3.toLong())
+                        amplitudes.add(255)  // ON
                     }
                 }
             }
         }
         
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            VibrationEffect.createWaveform(timings.toLongArray(), -1)
+            VibrationEffect.createWaveform(timings.toLongArray(), amplitudes.toIntArray(), -1)
         } else {
             null
         }
@@ -170,11 +178,10 @@ object VibrationPatterns {
     fun getVibrationEffect(patternId: String, hasAmplitudeControl: Boolean): VibrationEffect? {
         val pattern = PATTERNS[patternId] ?: return null
 
-        // HYPOTHESIS: The device's amplitude control implementation is buggy.
-        // To fix this, we ignore amplitude control and use the simpler createWaveform version
-        // for all modern devices. This version only uses timings.
+        // Use explicit amplitudes for multi-segment waveforms to work around device-specific bugs.
+        // Some devices require amplitude values to properly execute vibration sequences.
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            VibrationEffect.createWaveform(pattern.timings, -1)
+            VibrationEffect.createWaveform(pattern.timings, pattern.amplitudes, -1)
         } else {
             // Older APIs don't have amplitude control anyway.
             @Suppress("DEPRECATION")
