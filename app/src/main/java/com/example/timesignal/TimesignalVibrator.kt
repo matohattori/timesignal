@@ -6,6 +6,7 @@ import android.os.PowerManager
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import com.example.timesignal.domain.VibrationPattern
 
 class TimesignalVibrator(private val context: Context) {
     private val vibrator: Vibrator? = when {
@@ -18,17 +19,18 @@ class TimesignalVibrator(private val context: Context) {
 
     private val powerManager: PowerManager = context.getSystemService(Context.POWER_SERVICE) as PowerManager
 
-    fun vibrate(durationMs: Int) {
+    fun vibrate(pattern: VibrationPattern) {
+        val totalDuration = pattern.timings.sum() + 200L
         val wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Timesignal::VibrationWakeLock")
         try {
-            wakeLock.acquire(durationMs.toLong() + 200) // Acquire lock with a timeout
+            wakeLock.acquire(totalDuration) // Acquire lock with a timeout
 
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                val effect = VibrationEffect.createOneShot(durationMs.toLong(), VibrationEffect.DEFAULT_AMPLITUDE)
+                val effect = VibrationEffect.createWaveform(pattern.timings, -1)
                 vibrator?.vibrate(effect)
             } else {
                 @Suppress("DEPRECATION")
-                vibrator?.vibrate(durationMs.toLong())
+                vibrator?.vibrate(pattern.timings, -1)
             }
         } finally {
             if (wakeLock.isHeld) {

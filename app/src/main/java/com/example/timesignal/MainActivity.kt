@@ -45,8 +45,8 @@ class MainActivity : ComponentActivity() {
                     onToggleQuarter = { slot: QuarterSlot, enabled: Boolean ->
                         viewModel.setQuarterEnabled(slot, enabled)
                     },
-                    onSelectDuration = { slot: QuarterSlot, duration ->
-                        viewModel.setQuarterDuration(slot, duration)
+                    onSelectPattern = { slot: QuarterSlot, patternId ->
+                        viewModel.setQuarterPattern(slot, patternId)
                     },
                     onNavigateToExactAlarmSettings = {
                         startActivity(
