@@ -11,4 +11,16 @@
     <string name="quarter_15">15分</string>
     <string name="quarter_30">30分</string>
     <string name="quarter_45">45分</string>
+
+    <!-- Custom vibration pattern settings -->
+    <string name="vibration_pattern_settings">振動パターン設定</string>
+    <string name="vib1_label">振動1</string>
+    <string name="pause1_label">停止1</string>
+    <string name="vib2_label">振動2</string>
+    <string name="pause2_label">停止2</string>
+    <string name="vib3_label">振動3</string>
+    <string name="disabled_option">-（無効）</string>
+    <string name="test_button">テスト</string>
+    <string name="vibration_explanation">「-」を選択するとこの時点で振動シーケンスが終了します</string>
+    <string name="duration_format">%d ms</string>
 </resources>

@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.timesignal.TimesignalVibrator
+import com.example.timesignal.domain.CustomVibrationPattern
 import com.example.timesignal.domain.QuarterSlot
 import com.example.timesignal.domain.TimesignalRepository
 import com.example.timesignal.domain.TimesignalScheduler
@@ -23,6 +24,9 @@ class TimesignalViewModel(
     private val vibrator: TimesignalVibrator,
     private val alarmManager: AlarmManager,
 ) : ViewModel() {
+
+    private val _isTestingVibration = kotlinx.coroutines.flow.MutableStateFlow(false)
+    val isTestingVibration: StateFlow<Boolean> = _isTestingVibration
 
     val uiState: StateFlow<TimesignalState> = repository.state
         .map { state ->
@@ -44,8 +48,7 @@ class TimesignalViewModel(
 
             val wasEnabled = previous.quarters[slot]?.enabled == true
             if (!wasEnabled && enabled) {
-                val patternId = latest.quarters[slot]?.vibrationPatternId ?: return@launch
-                vibrator.vibrate(patternId)
+                testVibration(slot)
             }
         }
     }
@@ -57,6 +60,40 @@ class TimesignalViewModel(
             scheduler.reschedule(latest)
             vibrator.vibrate(patternId)
         }
+    }
+
+    fun setCustomVibrationPattern(slot: QuarterSlot, customPattern: CustomVibrationPattern) {
+        viewModelScope.launch {
+            repository.setCustomVibrationPattern(slot, customPattern)
+            val latest = repository.getLatestState()
+            scheduler.reschedule(latest)
+        }
+    }
+
+    fun testVibration(slot: QuarterSlot) {
+        viewModelScope.launch {
+            _isTestingVibration.value = true
+            try {
+                val state = repository.getLatestState()
+                val settings = state.quarters[slot]
+                if (settings != null) {
+                    if (settings.customPattern != null) {
+                        vibrator.vibrateCustom(settings.customPattern)
+                        // Wait for vibration to complete
+                        kotlinx.coroutines.delay(VibrationPatterns.getCustomPatternDuration(settings.customPattern) + VIBRATION_BUFFER_DELAY_MS)
+                    } else {
+                        vibrator.vibrate(settings.vibrationPatternId)
+                        kotlinx.coroutines.delay(VibrationPatterns.getPatternDuration(settings.vibrationPatternId) + VIBRATION_BUFFER_DELAY_MS)
+                    }
+                }
+            } finally {
+                _isTestingVibration.value = false
+            }
+        }
+    }
+
+    companion object {
+        private const val VIBRATION_BUFFER_DELAY_MS = 200L
     }
 
     class Factory(

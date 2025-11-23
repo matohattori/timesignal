@@ -42,13 +42,21 @@ class MainActivity : ComponentActivity() {
             TimesignalTheme {
                 val viewModel: TimesignalViewModel = viewModel(factory = factory)
                 val uiState = viewModel.uiState.collectAsStateWithLifecycle()
+                val isTestingVibration = viewModel.isTestingVibration.collectAsStateWithLifecycle()
                 TimesignalScreen(
                     state = uiState.value,
+                    isTestingVibration = isTestingVibration.value,
                     onToggleQuarter = { slot: QuarterSlot, enabled: Boolean ->
                         viewModel.setQuarterEnabled(slot, enabled)
                     },
                     onSelectVibrationPattern = { slot: QuarterSlot, patternId ->
                         viewModel.setVibrationPattern(slot, patternId)
+                    },
+                    onUpdateCustomPattern = { slot: QuarterSlot, customPattern ->
+                        viewModel.setCustomVibrationPattern(slot, customPattern)
+                    },
+                    onTestVibration = { slot: QuarterSlot ->
+                        viewModel.testVibration(slot)
                     },
                     onNavigateToExactAlarmSettings = {
                         startActivity(

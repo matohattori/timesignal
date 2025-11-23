@@ -33,7 +33,11 @@ class TimesignalService : Service() {
                         val state = app.container.repository.getLatestState()
                         val slotSettings = state.quarters[slot]
                         if (slotSettings?.enabled == true) {
-                            app.container.vibrator.vibrate(slotSettings.vibrationPatternId)
+                            if (slotSettings.customPattern != null) {
+                                app.container.vibrator.vibrateCustom(slotSettings.customPattern)
+                            } else {
+                                app.container.vibrator.vibrate(slotSettings.vibrationPatternId)
+                            }
                         }
                         app.container.scheduler.scheduleNext(slot)
                     }

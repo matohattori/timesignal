@@ -7,5 +7,6 @@ interface TimesignalRepository {
 
     suspend fun setQuarterEnabled(slot: QuarterSlot, enabled: Boolean)
     suspend fun setVibrationPattern(slot: QuarterSlot, patternId: String)
+    suspend fun setCustomVibrationPattern(slot: QuarterSlot, customPattern: CustomVibrationPattern)
     suspend fun getLatestState(): TimesignalState
 }

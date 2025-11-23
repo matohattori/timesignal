@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.PowerManager
 import android.os.Vibrator
 import android.os.VibratorManager
+import com.example.timesignal.domain.CustomVibrationPattern
 import com.example.timesignal.domain.VibrationPatterns
 
 class TimesignalVibrator(private val context: Context) {
@@ -31,6 +32,20 @@ class TimesignalVibrator(private val context: Context) {
 
         val effect = VibrationPatterns.getVibrationEffect(patternId, hasAmplitudeControl)
         val duration = VibrationPatterns.getPatternDuration(patternId)
+
+        if (effect == null || duration == 0L) return
+
+        val wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Timesignal::VibrationWakeLock")
+        wakeLock.acquire(duration + 200)
+
+        vibrator?.vibrate(effect)
+    }
+
+    fun vibrateCustom(customPattern: CustomVibrationPattern) {
+        vibrator?.cancel()
+
+        val effect = VibrationPatterns.getCustomVibrationEffect(customPattern)
+        val duration = VibrationPatterns.getCustomPatternDuration(customPattern)
 
         if (effect == null || duration == 0L) return
 
