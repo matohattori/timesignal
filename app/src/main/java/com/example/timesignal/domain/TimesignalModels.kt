@@ -138,8 +138,7 @@ object VibrationPatterns {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             VibrationEffect.createWaveform(timings.toLongArray(), -1)
         } else {
-            @Suppress("DEPRECATION")
-            VibrationEffect.createWaveform(timings.toLongArray(), -1)
+            null
         }
     }
 

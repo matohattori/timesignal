@@ -5,6 +5,7 @@ import android.os.Build
 import android.os.PowerManager
 import android.os.Vibrator
 import android.os.VibratorManager
+import com.example.timesignal.domain.CustomVibrationPattern
 import com.example.timesignal.domain.VibrationPatterns
 
 class TimesignalVibrator(private val context: Context) {
@@ -40,7 +41,7 @@ class TimesignalVibrator(private val context: Context) {
         vibrator?.vibrate(effect)
     }
 
-    fun vibrateCustom(customPattern: com.example.timesignal.domain.CustomVibrationPattern) {
+    fun vibrateCustom(customPattern: CustomVibrationPattern) {
         vibrator?.cancel()
 
         val effect = VibrationPatterns.getCustomVibrationEffect(customPattern)

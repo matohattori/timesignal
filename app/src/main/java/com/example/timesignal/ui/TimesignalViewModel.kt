@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.example.timesignal.TimesignalVibrator
+import com.example.timesignal.domain.CustomVibrationPattern
 import com.example.timesignal.domain.QuarterSlot
 import com.example.timesignal.domain.TimesignalRepository
 import com.example.timesignal.domain.TimesignalScheduler
@@ -61,7 +62,7 @@ class TimesignalViewModel(
         }
     }
 
-    fun setCustomVibrationPattern(slot: QuarterSlot, customPattern: com.example.timesignal.domain.CustomVibrationPattern) {
+    fun setCustomVibrationPattern(slot: QuarterSlot, customPattern: CustomVibrationPattern) {
         viewModelScope.launch {
             repository.setCustomVibrationPattern(slot, customPattern)
             val latest = repository.getLatestState()
