@@ -10,6 +10,7 @@ import com.example.timesignal.domain.CustomVibrationPattern
 import com.example.timesignal.domain.VibrationPatterns
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 
@@ -31,6 +32,9 @@ class TimesignalVibrator(private val context: Context) {
 
     private val powerManager: PowerManager =
         context.getSystemService(Context.POWER_SERVICE) as PowerManager
+    
+    private var vibrationJob: Job? = null
+    private val coroutineScope = CoroutineScope(Dispatchers.Default)
 
     fun vibrate(patternId: String) {
         vibrator?.cancel()
@@ -47,34 +51,40 @@ class TimesignalVibrator(private val context: Context) {
     }
 
     fun vibrateCustom(customPattern: CustomVibrationPattern) {
+        // Cancel any ongoing vibration and job
+        vibrationJob?.cancel()
         vibrator?.cancel()
 
         val duration = VibrationPatterns.getCustomPatternDuration(customPattern)
         if (duration == 0L) return
 
         val wakeLock = powerManager.newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "Timesignal::VibrationWakeLock")
-        wakeLock.acquire(duration + 200)
+        // Add extra buffer to wakeLock duration to account for coroutine scheduling delays
+        wakeLock.acquire(duration + 500)
 
         // Convert pattern to segments and execute sequentially using createOneShot
         // This fixes Wear OS (Pixel Watch 4) issue where createWaveform only executes first vibration
         val segments = customPattern.toSegments()
         
-        CoroutineScope(Dispatchers.Default).launch {
-            for (segment in segments) {
-                val (vibMs, pauseMs) = segment
-                
-                // Execute vibration using createOneShot
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    val effect = VibrationEffect.createOneShot(vibMs.toLong(), VibrationEffect.DEFAULT_AMPLITUDE)
-                    vibrator?.vibrate(effect)
-                } else {
-                    // Fallback for older API (though minSdk is 30)
-                    @Suppress("DEPRECATION")
-                    vibrator?.vibrate(vibMs.toLong())
+        vibrationJob = coroutineScope.launch {
+            try {
+                for (segment in segments) {
+                    val (vibMs, pauseMs) = segment
+                    
+                    // Execute vibration using createOneShot (minSdk is 30, so O check is sufficient)
+                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                        val effect = VibrationEffect.createOneShot(vibMs.toLong(), VibrationEffect.DEFAULT_AMPLITUDE)
+                        vibrator?.vibrate(effect)
+                    }
+                    
+                    // Wait for vibration + pause duration before next segment
+                    delay(vibMs.toLong() + pauseMs.toLong())
                 }
-                
-                // Wait for vibration + pause duration before next segment
-                delay(vibMs.toLong() + pauseMs.toLong())
+            } finally {
+                // Ensure wakeLock is released even if coroutine is cancelled
+                if (wakeLock.isHeld) {
+                    wakeLock.release()
+                }
             }
         }
     }
