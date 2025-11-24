@@ -63,6 +63,34 @@ data class CustomVibrationPattern(
             else -> true
         }
     }
+
+    /**
+     * Converts this CustomVibrationPattern to a list of (vibrationMs, pauseMs) segments.
+     * Each segment represents one vibration followed by a pause.
+     * This is used for sequential createOneShot execution on Wear OS.
+     */
+    fun toSegments(): List<Pair<Int, Int>> {
+        val segments = mutableListOf<Pair<Int, Int>>()
+        
+        // vib1 is always present
+        if (pause1 != null) {
+            segments.add(Pair(vib1, pause1))
+            
+            if (vib2 != null) {
+                val pause2Value = pause2 ?: 0
+                segments.add(Pair(vib2, pause2Value))
+                
+                if (vib3 != null) {
+                    segments.add(Pair(vib3, 0))
+                }
+            }
+        } else {
+            // Only vib1, no pause
+            segments.add(Pair(vib1, 0))
+        }
+        
+        return segments
+    }
 }
 
 /**
@@ -144,9 +172,10 @@ object VibrationPatterns {
 
     /**
      * Calculates the total duration of a custom vibration pattern.
+     * Updated for sequential createOneShot execution (no initial delay needed).
      */
     fun getCustomPatternDuration(customPattern: CustomVibrationPattern): Long {
-        var duration = 1L + customPattern.vib1 // Initial delay + vib1
+        var duration = customPattern.vib1.toLong()
         
         if (customPattern.pause1 != null) {
             duration += customPattern.pause1
