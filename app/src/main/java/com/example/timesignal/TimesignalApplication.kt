@@ -27,9 +27,12 @@ class TimesignalApplication : Application() {
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
             val name = getString(R.string.notification_channel_name)
             val descriptionText = getString(R.string.notification_channel_description)
-            val importance = NotificationManager.IMPORTANCE_DEFAULT
+            val importance = NotificationManager.IMPORTANCE_LOW
             val channel = NotificationChannel(TimesignalService.NOTIFICATION_CHANNEL_ID, name, importance).apply {
                 description = descriptionText
+                enableVibration(false)
+                vibrationPattern = null
+                setSound(null, null)
             }
             val notificationManager: NotificationManager =
                 getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager

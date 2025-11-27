@@ -54,6 +54,7 @@ class TimesignalService : Service() {
         return NotificationCompat.Builder(this, NOTIFICATION_CHANNEL_ID)
             .setContentTitle(getString(R.string.notification_title))
             .setSmallIcon(android.R.drawable.ic_dialog_info) // Use a standard system icon
+            .setSilent(true)
             .build()
     }
 
