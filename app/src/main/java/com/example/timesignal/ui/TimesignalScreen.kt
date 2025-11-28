@@ -265,8 +265,8 @@ private fun DurationSelector(
                 )
             }
             
-            // Add duration options (100-900 ms in 100 ms increments)
-            for (duration in 100..900 step 100) {
+            // Add duration options (50, 100, 200, 300, 500 ms)
+            for (duration in listOf(50, 100, 200, 300, 500)) {
                 val isSelected = value == duration
                 CompactChip(
                     onClick = { if (enabled) onValueChange(duration) },

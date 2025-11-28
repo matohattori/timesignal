@@ -35,11 +35,11 @@ data class QuarterSettings(
 
 /**
  * Custom vibration pattern with up to 5 segments.
- * vib1: First vibration (required, 100-900ms)
- * pause1: First pause (optional, 100-900ms or null for disabled)
- * vib2: Second vibration (optional, 100-900ms or null for disabled)
- * pause2: Second pause (optional, 100-900ms or null for disabled)
- * vib3: Third vibration (optional, 100-900ms or null for disabled)
+ * vib1: First vibration (required, 50/100/200/300/500ms)
+ * pause1: First pause (optional, 50/100/200/300/500ms or null for disabled)
+ * vib2: Second vibration (optional, 50/100/200/300/500ms or null for disabled)
+ * pause2: Second pause (optional, 50/100/200/300/500ms or null for disabled)
+ * vib3: Third vibration (optional, 50/100/200/300/500ms or null for disabled)
  * When a field is null, all subsequent fields are ignored.
  */
 data class CustomVibrationPattern(
@@ -61,6 +61,25 @@ data class CustomVibrationPattern(
             vib2 == null -> pause2 == null && vib3 == null
             pause2 == null -> vib3 == null
             else -> true
+        }
+    }
+
+    companion object {
+        /**
+         * Valid duration options for vibration/pause.
+         */
+        val VALID_DURATIONS = listOf(50, 100, 200, 300, 500)
+
+        /**
+         * Migrates a duration value to the nearest valid option.
+         * If the value is null, returns null.
+         * If the value is already valid, returns it unchanged.
+         * Otherwise, returns the nearest valid value.
+         */
+        fun migrateToNearestValidDuration(value: Int?): Int? {
+            if (value == null) return null
+            if (value in VALID_DURATIONS) return value
+            return VALID_DURATIONS.minByOrNull { kotlin.math.abs(it - value) } ?: 200
         }
     }
 }
@@ -92,15 +111,15 @@ object VibrationPatterns {
      * Migrates a legacy preset pattern ID to a CustomVibrationPattern.
      * SHORT_1 -> vib1=100ms, others disabled
      * SHORT_2 -> vib1=100ms, pause1=200ms, vib2=100ms, others disabled
-     * LONG_1 -> vib1=400ms, others disabled
-     * LONG_2 -> vib1=100ms, pause1=200ms, vib2=400ms, others disabled
+     * LONG_1 -> vib1=500ms (migrated from 400ms), others disabled
+     * LONG_2 -> vib1=100ms, pause1=200ms, vib2=500ms (migrated from 400ms), others disabled
      */
     fun migratePresetToCustom(patternId: String): CustomVibrationPattern {
         return when (patternId) {
             "SHORT_1" -> CustomVibrationPattern(vib1 = 100)
             "SHORT_2" -> CustomVibrationPattern(vib1 = 100, pause1 = 200, vib2 = 100)
-            "LONG_1" -> CustomVibrationPattern(vib1 = 400)
-            "LONG_2" -> CustomVibrationPattern(vib1 = 100, pause1 = 200, vib2 = 400)
+            "LONG_1" -> CustomVibrationPattern(vib1 = 500)
+            "LONG_2" -> CustomVibrationPattern(vib1 = 100, pause1 = 200, vib2 = 500)
             else -> CustomVibrationPattern(vib1 = 200) // Default
         }
     }
