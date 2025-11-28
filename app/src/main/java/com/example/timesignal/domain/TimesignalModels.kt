@@ -43,7 +43,7 @@ data class QuarterSettings(
  * When a field is null, all subsequent fields are ignored.
  */
 data class CustomVibrationPattern(
-    val vib1: Int = 200, // Required, default 200ms
+    val vib1: Int = 200, // Required, default DEFAULT_DURATION (200ms)
     val pause1: Int? = null, // Optional
     val vib2: Int? = null, // Optional
     val pause2: Int? = null, // Optional
@@ -69,6 +69,11 @@ data class CustomVibrationPattern(
          * Valid duration options for vibration/pause.
          */
         val VALID_DURATIONS = listOf(50, 100, 200, 300, 500)
+        
+        /**
+         * Default duration for vibration patterns.
+         */
+        const val DEFAULT_DURATION = 200
 
         /**
          * Migrates a duration value to the nearest valid option.
@@ -79,7 +84,7 @@ data class CustomVibrationPattern(
         fun migrateToNearestValidDuration(value: Int?): Int? {
             if (value == null) return null
             if (value in VALID_DURATIONS) return value
-            return VALID_DURATIONS.minByOrNull { kotlin.math.abs(it - value) } ?: 200
+            return VALID_DURATIONS.minByOrNull { kotlin.math.abs(it - value) } ?: DEFAULT_DURATION
         }
     }
 }
@@ -120,7 +125,7 @@ object VibrationPatterns {
             "SHORT_2" -> CustomVibrationPattern(vib1 = 100, pause1 = 200, vib2 = 100)
             "LONG_1" -> CustomVibrationPattern(vib1 = 500)
             "LONG_2" -> CustomVibrationPattern(vib1 = 100, pause1 = 200, vib2 = 500)
-            else -> CustomVibrationPattern(vib1 = 200) // Default
+            else -> CustomVibrationPattern(vib1 = CustomVibrationPattern.DEFAULT_DURATION)
         }
     }
 
