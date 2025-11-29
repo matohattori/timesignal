@@ -67,12 +67,19 @@ class TimesignalPreferencesRepository(
     private fun loadCustomPattern(preferences: Preferences, slot: QuarterSlot): CustomVibrationPattern? {
         val vib1Str = preferences[customVib1Key(slot)]
         return if (vib1Str != null) {
+            val rawVib1 = vib1Str.toIntOrNull() ?: CustomVibrationPattern.DEFAULT_DURATION
+            val rawPause1 = preferences[customPause1Key(slot)]?.toIntOrNull()
+            val rawVib2 = preferences[customVib2Key(slot)]?.toIntOrNull()
+            val rawPause2 = preferences[customPause2Key(slot)]?.toIntOrNull()
+            val rawVib3 = preferences[customVib3Key(slot)]?.toIntOrNull()
+            
+            // Migrate values to nearest valid durations for compatibility
             CustomVibrationPattern(
-                vib1 = vib1Str.toIntOrNull() ?: 200,
-                pause1 = preferences[customPause1Key(slot)]?.toIntOrNull(),
-                vib2 = preferences[customVib2Key(slot)]?.toIntOrNull(),
-                pause2 = preferences[customPause2Key(slot)]?.toIntOrNull(),
-                vib3 = preferences[customVib3Key(slot)]?.toIntOrNull()
+                vib1 = CustomVibrationPattern.migrateToNearestValidDuration(rawVib1) ?: CustomVibrationPattern.DEFAULT_DURATION,
+                pause1 = CustomVibrationPattern.migrateToNearestValidDuration(rawPause1),
+                vib2 = CustomVibrationPattern.migrateToNearestValidDuration(rawVib2),
+                pause2 = CustomVibrationPattern.migrateToNearestValidDuration(rawPause2),
+                vib3 = CustomVibrationPattern.migrateToNearestValidDuration(rawVib3)
             )
         } else {
             null
