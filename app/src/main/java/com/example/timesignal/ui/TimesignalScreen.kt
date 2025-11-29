@@ -232,9 +232,19 @@ private fun DurationSelector(
     enabled: Boolean,
     onValueChange: (Int?) -> Unit
 ) {
-    val selectedChipColors = remember { ChipDefaults.secondaryChipColors() }
-    val defaultChipColors = remember { ChipDefaults.chipColors() }
-    
+    val selectedChipColors = remember {
+        ChipDefaults.chipColors(
+            backgroundColor = MaterialTheme.colors.primary,
+            contentColor = MaterialTheme.colors.onPrimary
+        )
+    }
+    val defaultChipColors = remember {
+        ChipDefaults.chipColors(
+            backgroundColor = MaterialTheme.colors.surface,
+            contentColor = MaterialTheme.colors.onSurface
+        )
+    }
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
