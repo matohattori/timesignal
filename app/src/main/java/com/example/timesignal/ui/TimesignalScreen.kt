@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -252,32 +253,36 @@ private fun DurationSelector(
         ) {
             // Add disabled option if applicable
             if (hasDisabledOption) {
-                val isSelected = value == null
-                CompactChip(
-                    onClick = { if (enabled) onValueChange(null) },
-                    label = { Text(stringResource(R.string.disabled_option)) },
-                    enabled = enabled,
-                    colors = if (isSelected) {
-                        ChipDefaults.secondaryChipColors()
-                    } else {
-                        ChipDefaults.chipColors()
-                    }
-                )
+                key("disabled") {
+                    val isSelected = value == null
+                    CompactChip(
+                        onClick = { if (enabled) onValueChange(null) },
+                        label = { Text(stringResource(R.string.disabled_option)) },
+                        enabled = enabled,
+                        colors = if (isSelected) {
+                            ChipDefaults.secondaryChipColors()
+                        } else {
+                            ChipDefaults.chipColors()
+                        }
+                    )
+                }
             }
             
             // Add duration options (50, 100, 200, 300, 500 ms)
             for (duration in listOf(50, 100, 200, 300, 500)) {
-                val isSelected = value == duration
-                CompactChip(
-                    onClick = { if (enabled) onValueChange(duration) },
-                    label = { Text("${duration}") },
-                    enabled = enabled,
-                    colors = if (isSelected) {
-                        ChipDefaults.secondaryChipColors()
-                    } else {
-                        ChipDefaults.chipColors()
-                    }
-                )
+                key(duration) {
+                    val isSelected = value == duration
+                    CompactChip(
+                        onClick = { if (enabled) onValueChange(duration) },
+                        label = { Text("$duration") },
+                        enabled = enabled,
+                        colors = if (isSelected) {
+                            ChipDefaults.secondaryChipColors()
+                        } else {
+                            ChipDefaults.chipColors()
+                        }
+                    )
+                }
             }
         }
     }
