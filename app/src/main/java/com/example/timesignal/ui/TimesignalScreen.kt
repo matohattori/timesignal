@@ -232,6 +232,9 @@ private fun DurationSelector(
     enabled: Boolean,
     onValueChange: (Int?) -> Unit
 ) {
+    val selectedChipColors = remember { ChipDefaults.secondaryChipColors() }
+    val defaultChipColors = remember { ChipDefaults.chipColors() }
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -257,11 +260,7 @@ private fun DurationSelector(
                     onClick = { if (enabled) onValueChange(null) },
                     label = { Text(stringResource(R.string.disabled_option)) },
                     enabled = enabled,
-                    colors = if (isSelected) {
-                        ChipDefaults.secondaryChipColors()
-                    } else {
-                        ChipDefaults.chipColors()
-                    }
+                    colors = if (isSelected) selectedChipColors else defaultChipColors
                 )
             }
             
@@ -272,11 +271,7 @@ private fun DurationSelector(
                     onClick = { if (enabled) onValueChange(duration) },
                     label = { Text("${duration}") },
                     enabled = enabled,
-                    colors = if (isSelected) {
-                        ChipDefaults.secondaryChipColors()
-                    } else {
-                        ChipDefaults.chipColors()
-                    }
+                    colors = if (isSelected) selectedChipColors else defaultChipColors
                 )
             }
         }
