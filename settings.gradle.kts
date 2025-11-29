@@ -1,7 +1,7 @@
 pluginManagement {
     repositories {
-        google() // GoogleのMavenリポジトリを追加
-        mavenCentral() // Maven Centralリポジトリを追加
+        google()
+        mavenCentral()
         gradlePluginPortal()
     }
 }
