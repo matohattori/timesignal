@@ -23,4 +23,6 @@
     <string name="test_button">テスト</string>
     <string name="vibration_explanation">「-」を選択するとこの時点で振動シーケンスが終了します</string>
     <string name="duration_format">%d ms</string>
+    <string name="select_duration_title">時間を選択</string>
+    <string name="confirm_selection">選択を確定</string>
 </resources>

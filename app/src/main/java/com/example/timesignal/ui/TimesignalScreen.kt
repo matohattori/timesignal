@@ -2,7 +2,7 @@ package com.example.timesignal.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
-import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,21 +15,29 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.window.Dialog
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
+import androidx.wear.compose.foundation.lazy.rememberScalingLazyListState
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Card
-import androidx.wear.compose.material.ChipDefaults
-import androidx.wear.compose.material.CompactChip
+import androidx.wear.compose.material.CardDefaults
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Switch
@@ -286,6 +294,10 @@ private fun CustomPatternEditor(
     }
 }
 
+/**
+ * Duration selector that shows current value as text.
+ * When tapped, opens a dialog with vertical scroll picker for selection.
+ */
 @Composable
 private fun DurationSelector(
     label: String,
@@ -294,6 +306,8 @@ private fun DurationSelector(
     enabled: Boolean,
     onValueChange: (Int?) -> Unit
 ) {
+    var showDialog by remember { mutableStateOf(false) }
+    
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -303,46 +317,155 @@ private fun DurationSelector(
         Text(
             text = label,
             style = MaterialTheme.typography.caption1,
-            color = MaterialTheme.colors.onSurface,
+            color = if (enabled) MaterialTheme.colors.onSurface else MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
             modifier = Modifier.width(LABEL_WIDTH)
         )
         
         Spacer(modifier = Modifier.width(4.dp))
         
-        Row(
-            modifier = Modifier.horizontalScroll(rememberScrollState()),
-            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        // Display current value as tappable text
+        val displayText = if (value == null) {
+            stringResource(R.string.disabled_option)
+        } else {
+            stringResource(R.string.duration_format, value)
+        }
+        
+        Box(
+            modifier = Modifier
+                .weight(1f)
+                .clip(RoundedCornerShape(8.dp))
+                .background(
+                    if (enabled) {
+                        MaterialTheme.colors.primary.copy(alpha = 0.2f)
+                    } else {
+                        MaterialTheme.colors.onSurface.copy(alpha = 0.1f)
+                    }
+                )
+                .clickable(enabled = enabled) { showDialog = true }
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            contentAlignment = Alignment.Center
         ) {
-            // Add disabled option if applicable
-            if (hasDisabledOption) {
-                key("disabled") {
-                    val isSelected = value == null
-                    CompactChip(
-                        onClick = { if (enabled) onValueChange(null) },
-                        label = { Text(stringResource(R.string.disabled_option)) },
-                        enabled = enabled,
-                        colors = if (isSelected) {
-                            ChipDefaults.primaryChipColors()
+            Text(
+                text = displayText,
+                style = MaterialTheme.typography.body1,
+                color = if (enabled) MaterialTheme.colors.primary else MaterialTheme.colors.onSurface.copy(alpha = 0.5f),
+                textAlign = TextAlign.Center
+            )
+        }
+    }
+    
+    // Duration picker dialog
+    if (showDialog) {
+        DurationPickerDialog(
+            currentValue = value,
+            hasDisabledOption = hasDisabledOption,
+            onValueSelected = { newValue ->
+                onValueChange(newValue)
+                showDialog = false
+            },
+            onDismiss = { showDialog = false }
+        )
+    }
+}
+
+/**
+ * Dialog with vertical scroll picker for duration selection.
+ * Includes a confirmation button at the bottom.
+ */
+@Composable
+private fun DurationPickerDialog(
+    currentValue: Int?,
+    hasDisabledOption: Boolean,
+    onValueSelected: (Int?) -> Unit,
+    onDismiss: () -> Unit
+) {
+    // Build list of options
+    val options = buildList {
+        if (hasDisabledOption) {
+            add(null) // Disabled option
+        }
+        addAll(listOf(50, 100, 200, 300, 500))
+    }
+    
+    // Find initial index
+    val initialIndex = options.indexOf(currentValue).coerceAtLeast(0)
+    var selectedIndex by remember { mutableIntStateOf(initialIndex) }
+    val listState = rememberScalingLazyListState(initialCenterItemIndex = initialIndex)
+    
+    Dialog(onDismissRequest = onDismiss) {
+        Box(
+            modifier = Modifier
+                .fillMaxSize()
+                .background(MaterialTheme.colors.background)
+        ) {
+            Column(
+                modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                // Title
+                Text(
+                    text = stringResource(R.string.select_duration_title),
+                    style = MaterialTheme.typography.title3,
+                    color = MaterialTheme.colors.onBackground,
+                    modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
+                )
+                
+                // Vertical scroll picker
+                ScalingLazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    items(options.size) { index ->
+                        val option = options[index]
+                        val isSelected = index == selectedIndex
+                        
+                        val displayText = if (option == null) {
+                            stringResource(R.string.disabled_option)
                         } else {
-                            ChipDefaults.secondaryChipColors()
+                            stringResource(R.string.duration_format, option)
                         }
-                    )
+                        
+                        Card(
+                            onClick = { selectedIndex = index },
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 4.dp),
+                            backgroundPainter = if (isSelected) {
+                                CardDefaults.cardBackgroundPainter(
+                                    startBackgroundColor = MaterialTheme.colors.primary,
+                                    endBackgroundColor = MaterialTheme.colors.primary
+                                )
+                            } else {
+                                CardDefaults.cardBackgroundPainter()
+                            }
+                        ) {
+                            Text(
+                                text = displayText,
+                                style = MaterialTheme.typography.body1,
+                                color = if (isSelected) MaterialTheme.colors.onPrimary else MaterialTheme.colors.onSurface,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.fillMaxWidth()
+                            )
+                        }
+                    }
                 }
-            }
-            
-            // Add duration options (50, 100, 200, 300, 500 ms)
-            for (duration in listOf(50, 100, 200, 300, 500)) {
-                key(duration) {
-                    val isSelected = value == duration
-                    CompactChip(
-                        onClick = { if (enabled) onValueChange(duration) },
-                        label = { Text("$duration") },
-                        enabled = enabled,
-                        colors = if (isSelected) {
-                            ChipDefaults.primaryChipColors()
-                        } else {
-                            ChipDefaults.secondaryChipColors()
-                        }
+                
+                // Confirmation button at the bottom
+                val confirmButtonDescription = stringResource(R.string.confirm_selection)
+                Button(
+                    onClick = { onValueSelected(options[selectedIndex]) },
+                    modifier = Modifier
+                        .padding(bottom = 16.dp)
+                        .size(48.dp)
+                        .semantics { contentDescription = confirmButtonDescription },
+                    colors = ButtonDefaults.primaryButtonColors()
+                ) {
+                    Text(
+                        text = "✔",
+                        style = MaterialTheme.typography.title2
                     )
                 }
             }
