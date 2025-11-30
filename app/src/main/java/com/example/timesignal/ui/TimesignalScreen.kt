@@ -10,6 +10,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -17,6 +18,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -38,10 +41,13 @@ import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Card
 import androidx.wear.compose.material.CardDefaults
+import androidx.wear.compose.material.Icon
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Scaffold
 import androidx.wear.compose.material.Switch
 import androidx.wear.compose.material.Text
+import androidx.wear.compose.material.ToggleChip
+import androidx.wear.compose.material.ToggleChipDefaults
 import com.example.timesignal.R
 import com.example.timesignal.domain.CustomVibrationPattern
 import com.example.timesignal.domain.QuarterSettings
@@ -151,41 +157,51 @@ private fun QuarterPage(
     ScalingLazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 8.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .padding(horizontal = 16.dp),
+        verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item {
-            // Header with slot name and toggle switch
-            Card(onClick = { onToggle(!settings.enabled) }) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        Text(text = slot.displayName, style = MaterialTheme.typography.title3)
-                        if (settings.enabled) {
-                            val pattern = settings.customPattern ?: VibrationPatterns.migratePresetToCustom(settings.vibrationPatternId)
-                            Text(
-                                text = formatPatternDescription(pattern),
-                                style = MaterialTheme.typography.caption1
-                            )
-                        }
-                    }
-                    Switch(checked = settings.enabled, onCheckedChange = null)
-                }
-            }
+            // Page title centered at top with margins for circular screen
+            Text(
+                text = slot.displayName,
+                style = MaterialTheme.typography.title2,
+                color = MaterialTheme.colors.onBackground,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 24.dp, vertical = 8.dp)
+            )
         }
 
+        item {
+            // "振動ON" toggle switch below title
+            ToggleChip(
+                checked = settings.enabled,
+                onCheckedChange = { onToggle(it) },
+                label = {
+                    Text(
+                        text = stringResource(R.string.vibration_on_label),
+                        style = MaterialTheme.typography.body1
+                    )
+                },
+                toggleControl = {
+                    Switch(
+                        checked = settings.enabled,
+                        onCheckedChange = null
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp),
+                colors = ToggleChipDefaults.toggleChipColors()
+            )
+        }
+
+        // Settings UI visible only when enabled
         if (settings.enabled) {
             item {
-                // Explanation text
-                Text(
-                    text = stringResource(R.string.vibration_explanation),
-                    style = MaterialTheme.typography.caption2,
-                    color = MaterialTheme.colors.onSurface,
-                    modifier = Modifier.padding(vertical = 4.dp)
-                )
+                Spacer(modifier = Modifier.height(4.dp))
             }
 
             item {
@@ -198,16 +214,20 @@ private fun QuarterPage(
             }
 
             item {
-                // Test button
+                // Test button with vibration icon instead of text
                 Button(
                     onClick = onTestVibration,
                     enabled = !isTestingDisabled,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 4.dp),
+                        .padding(top = 8.dp)
+                        .size(48.dp),
                     colors = ButtonDefaults.secondaryButtonColors()
                 ) {
-                    Text(text = stringResource(R.string.test_button))
+                    Icon(
+                        imageVector = Icons.Default.Vibration,
+                        contentDescription = stringResource(R.string.vibration_on_label),
+                        modifier = Modifier.size(24.dp)
+                    )
                 }
             }
         }
@@ -471,27 +491,4 @@ private fun DurationPickerDialog(
             }
         }
     }
-}
-
-private fun formatPatternDescription(pattern: CustomVibrationPattern): String {
-    val parts = mutableListOf<String>()
-    parts.add("振${pattern.vib1}")
-    
-    if (pattern.pause1 != null) {
-        parts.add("停${pattern.pause1}")
-        
-        if (pattern.vib2 != null) {
-            parts.add("振${pattern.vib2}")
-            
-            if (pattern.pause2 != null) {
-                parts.add("停${pattern.pause2}")
-                
-                if (pattern.vib3 != null) {
-                    parts.add("振${pattern.vib3}")
-                }
-            }
-        }
-    }
-    
-    return parts.joinToString("-") + "ms"
 }
