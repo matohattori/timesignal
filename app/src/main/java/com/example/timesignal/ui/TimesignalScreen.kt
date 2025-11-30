@@ -1,29 +1,30 @@
 package com.example.timesignal.ui
 
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.wear.compose.foundation.lazy.ScalingLazyColumn
-import androidx.wear.compose.foundation.lazy.items
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.ButtonDefaults
 import androidx.wear.compose.material.Card
@@ -42,6 +43,7 @@ import com.example.timesignal.domain.VibrationPatterns
 
 private val LABEL_WIDTH = 60.dp
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun TimesignalScreen(
     state: TimesignalState,
@@ -52,24 +54,34 @@ fun TimesignalScreen(
     onTestVibration: (QuarterSlot) -> Unit,
     onNavigateToExactAlarmSettings: () -> Unit,
 ) {
+    val slots = QuarterSlot.entries
+    val pagerState = rememberPagerState(pageCount = { slots.size })
+
     Scaffold(timeText = { }) {
-        ScalingLazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp)
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
+            // Permission warning at the top if needed
             if (!state.canScheduleExactAlarms) {
-                item {
-                    Card(onClick = onNavigateToExactAlarmSettings) {
-                        Text(text = stringResource(R.string.permission_required_warning))
-                    }
+                Card(
+                    onClick = onNavigateToExactAlarmSettings,
+                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                ) {
+                    Text(text = stringResource(R.string.permission_required_warning))
                 }
             }
 
-            items(QuarterSlot.values()) { slot ->
+            // Horizontal pager for each quarter slot
+            HorizontalPager(
+                state = pagerState,
+                modifier = Modifier
+                    .weight(1f)
+                    .fillMaxWidth()
+            ) { pageIndex ->
+                val slot = slots[pageIndex]
                 val settings = state.quarters[slot] ?: QuarterSettings()
-                QuarterCard(
+                QuarterPage(
                     slot = slot,
                     settings = settings,
                     isTestingDisabled = isTestingVibration,
@@ -79,12 +91,47 @@ fun TimesignalScreen(
                     onTestVibration = { onTestVibration(slot) },
                 )
             }
+
+            // Page indicator
+            PageIndicator(
+                pageCount = slots.size,
+                currentPage = pagerState.currentPage,
+                modifier = Modifier.padding(bottom = 8.dp)
+            )
         }
     }
 }
 
 @Composable
-private fun QuarterCard(
+private fun PageIndicator(
+    pageCount: Int,
+    currentPage: Int,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        repeat(pageCount) { index ->
+            Box(
+                modifier = Modifier
+                    .size(if (index == currentPage) 8.dp else 6.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (index == currentPage) {
+                            MaterialTheme.colors.primary
+                        } else {
+                            MaterialTheme.colors.onSurface.copy(alpha = 0.3f)
+                        }
+                    )
+            )
+        }
+    }
+}
+
+@Composable
+private fun QuarterPage(
     slot: QuarterSlot,
     settings: QuarterSettings,
     isTestingDisabled: Boolean,
@@ -93,49 +140,62 @@ private fun QuarterCard(
     onUpdateCustomPattern: (CustomVibrationPattern) -> Unit,
     onTestVibration: () -> Unit,
 ) {
-    Card(onClick = { onToggle(!settings.enabled) }) {
-        Column(modifier = Modifier.fillMaxWidth()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Column(modifier = Modifier.weight(1f)) {
-                    Text(text = slot.displayName, style = MaterialTheme.typography.title3)
-                    if (settings.enabled) {
-                        val pattern = settings.customPattern ?: VibrationPatterns.migratePresetToCustom(settings.vibrationPatternId)
-                        Text(
-                            text = formatPatternDescription(pattern),
-                            style = MaterialTheme.typography.caption1
-                        )
+    ScalingLazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(horizontal = 8.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        item {
+            // Header with slot name and toggle switch
+            Card(onClick = { onToggle(!settings.enabled) }) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Column(modifier = Modifier.weight(1f)) {
+                        Text(text = slot.displayName, style = MaterialTheme.typography.title3)
+                        if (settings.enabled) {
+                            val pattern = settings.customPattern ?: VibrationPatterns.migratePresetToCustom(settings.vibrationPatternId)
+                            Text(
+                                text = formatPatternDescription(pattern),
+                                style = MaterialTheme.typography.caption1
+                            )
+                        }
                     }
+                    Switch(checked = settings.enabled, onCheckedChange = null)
                 }
-                Switch(checked = settings.enabled, onCheckedChange = null)
             }
-            
-            if (settings.enabled) {
-                Spacer(modifier = Modifier.height(6.dp))
-                
-                // Show explanation text
+        }
+
+        if (settings.enabled) {
+            item {
+                // Explanation text
                 Text(
                     text = stringResource(R.string.vibration_explanation),
                     style = MaterialTheme.typography.caption2,
-                    modifier = Modifier.padding(bottom = 4.dp)
+                    modifier = Modifier.padding(vertical = 4.dp)
                 )
-                
-                // Get current pattern or migrate from preset
+            }
+
+            item {
+                // Custom pattern editor
                 val currentPattern = settings.customPattern ?: VibrationPatterns.migratePresetToCustom(settings.vibrationPatternId)
-                
                 CustomPatternEditor(
                     pattern = currentPattern,
                     onPatternChange = onUpdateCustomPattern
                 )
-                
-                Spacer(modifier = Modifier.height(4.dp))
-                
+            }
+
+            item {
+                // Test button
                 Button(
                     onClick = onTestVibration,
                     enabled = !isTestingDisabled,
-                    modifier = Modifier.fillMaxWidth(),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
                     colors = ButtonDefaults.secondaryButtonColors()
                 ) {
                     Text(text = stringResource(R.string.test_button))
@@ -242,6 +302,7 @@ private fun DurationSelector(
         Text(
             text = label,
             style = MaterialTheme.typography.caption1,
+            color = MaterialTheme.colors.onSurface,
             modifier = Modifier.width(LABEL_WIDTH)
         )
         
@@ -260,9 +321,9 @@ private fun DurationSelector(
                         label = { Text(stringResource(R.string.disabled_option)) },
                         enabled = enabled,
                         colors = if (isSelected) {
-                            ChipDefaults.secondaryChipColors()
+                            ChipDefaults.primaryChipColors()
                         } else {
-                            ChipDefaults.chipColors()
+                            ChipDefaults.secondaryChipColors()
                         }
                     )
                 }
@@ -277,9 +338,9 @@ private fun DurationSelector(
                         label = { Text("$duration") },
                         enabled = enabled,
                         colors = if (isSelected) {
-                            ChipDefaults.secondaryChipColors()
+                            ChipDefaults.primaryChipColors()
                         } else {
-                            ChipDefaults.chipColors()
+                            ChipDefaults.secondaryChipColors()
                         }
                     )
                 }

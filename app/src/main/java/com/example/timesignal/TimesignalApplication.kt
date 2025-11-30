@@ -10,6 +10,9 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.example.timesignal.data.TimesignalPreferencesRepository
 import com.example.timesignal.domain.TimesignalRepository
 import com.example.timesignal.domain.TimesignalScheduler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 private val Application.dataStore: DataStore<Preferences> by preferencesDataStore(name = "timesignal")
 
@@ -21,6 +24,20 @@ class TimesignalApplication : Application() {
         super.onCreate()
         container = TimesignalContainer(this)
         createNotificationChannel()
+        // Reschedule alarms on app startup to ensure they are registered
+        rescheduleAlarmsOnStartup()
+    }
+
+    private fun rescheduleAlarmsOnStartup() {
+        CoroutineScope(Dispatchers.IO).launch {
+            try {
+                val state = container.repository.getLatestState()
+                container.scheduler.reschedule(state)
+            } catch (e: Exception) {
+                // Log error but don't crash the app
+                android.util.Log.e("TimesignalApp", "Failed to reschedule alarms on startup", e)
+            }
+        }
     }
 
     private fun createNotificationChannel() {
