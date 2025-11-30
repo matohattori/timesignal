@@ -175,6 +175,7 @@ private fun QuarterPage(
                 Text(
                     text = stringResource(R.string.vibration_explanation),
                     style = MaterialTheme.typography.caption2,
+                    color = MaterialTheme.colors.onSurface,
                     modifier = Modifier.padding(vertical = 4.dp)
                 )
             }
