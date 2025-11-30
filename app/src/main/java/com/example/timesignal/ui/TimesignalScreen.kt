@@ -3,6 +3,7 @@ package com.example.timesignal.ui
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -21,14 +22,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Vibration
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.input.rotary.onRotaryScrollEvent
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -54,6 +60,7 @@ import com.example.timesignal.domain.QuarterSettings
 import com.example.timesignal.domain.QuarterSlot
 import com.example.timesignal.domain.TimesignalState
 import com.example.timesignal.domain.VibrationPatterns
+import kotlinx.coroutines.launch
 
 private val LABEL_WIDTH = 60.dp
 
@@ -154,10 +161,28 @@ private fun QuarterPage(
     onUpdateCustomPattern: (CustomVibrationPattern) -> Unit,
     onTestVibration: () -> Unit,
 ) {
+    val listState = rememberScalingLazyListState()
+    val focusRequester = remember { FocusRequester() }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Request focus to enable rotary input
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
+
     ScalingLazyColumn(
+        state = listState,
         modifier = Modifier
             .fillMaxSize()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .onRotaryScrollEvent { event ->
+                coroutineScope.launch {
+                    listState.scrollBy(event.verticalScrollPixels)
+                }
+                true
+            }
+            .focusRequester(focusRequester)
+            .focusable(),
         verticalArrangement = Arrangement.spacedBy(4.dp),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
@@ -393,6 +418,7 @@ private fun DurationSelector(
 /**
  * Dialog with vertical scroll picker for duration selection.
  * Includes a confirmation button at the bottom.
+ * Supports rotary input (crown rotation) for scrolling.
  */
 @Composable
 private fun DurationPickerDialog(
@@ -413,6 +439,13 @@ private fun DurationPickerDialog(
     val initialIndex = options.indexOf(currentValue).coerceAtLeast(0)
     var selectedIndex by remember { mutableIntStateOf(initialIndex) }
     val listState = rememberScalingLazyListState(initialCenterItemIndex = initialIndex)
+    val focusRequester = remember { FocusRequester() }
+    val coroutineScope = rememberCoroutineScope()
+
+    // Request focus to enable rotary input
+    LaunchedEffect(Unit) {
+        focusRequester.requestFocus()
+    }
     
     Dialog(onDismissRequest = onDismiss) {
         Box(
@@ -432,12 +465,20 @@ private fun DurationPickerDialog(
                     modifier = Modifier.padding(top = 16.dp, bottom = 8.dp)
                 )
                 
-                // Vertical scroll picker
+                // Vertical scroll picker with rotary input support
                 ScalingLazyColumn(
                     state = listState,
                     modifier = Modifier
                         .weight(1f)
-                        .fillMaxWidth(),
+                        .fillMaxWidth()
+                        .onRotaryScrollEvent { event ->
+                            coroutineScope.launch {
+                                listState.scrollBy(event.verticalScrollPixels)
+                            }
+                            true
+                        }
+                        .focusRequester(focusRequester)
+                        .focusable(),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     items(options.size) { index ->
