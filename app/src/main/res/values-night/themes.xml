@@ -1,3 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="Theme.Timesignal" parent="Theme.Material3.DayNight.NoActionBar" />
+
+    <style name="Theme.Timesignal" parent="@android:style/Theme.DeviceDefault">
+        
+    </style>
 </resources>
