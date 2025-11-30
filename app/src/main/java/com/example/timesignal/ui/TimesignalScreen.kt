@@ -186,6 +186,8 @@ private fun QuarterPage(
                     )
                 },
                 toggleControl = {
+                    // Switch with null onCheckedChange is the standard pattern for ToggleChip
+                    // The ToggleChip handles the toggle action and passes it to onCheckedChange
                     Switch(
                         checked = settings.enabled,
                         onCheckedChange = null
@@ -225,7 +227,7 @@ private fun QuarterPage(
                 ) {
                     Icon(
                         imageVector = Icons.Default.Vibration,
-                        contentDescription = stringResource(R.string.vibration_on_label),
+                        contentDescription = stringResource(R.string.test_vibration_description),
                         modifier = Modifier.size(24.dp)
                     )
                 }
