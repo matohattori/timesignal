@@ -302,6 +302,7 @@ private fun DurationSelector(
         Text(
             text = label,
             style = MaterialTheme.typography.caption1,
+            color = MaterialTheme.colors.onSurface,
             modifier = Modifier.width(LABEL_WIDTH)
         )
         
@@ -320,9 +321,9 @@ private fun DurationSelector(
                         label = { Text(stringResource(R.string.disabled_option)) },
                         enabled = enabled,
                         colors = if (isSelected) {
-                            ChipDefaults.secondaryChipColors()
+                            ChipDefaults.primaryChipColors()
                         } else {
-                            ChipDefaults.chipColors()
+                            ChipDefaults.secondaryChipColors()
                         }
                     )
                 }
@@ -337,9 +338,9 @@ private fun DurationSelector(
                         label = { Text("$duration") },
                         enabled = enabled,
                         colors = if (isSelected) {
-                            ChipDefaults.secondaryChipColors()
+                            ChipDefaults.primaryChipColors()
                         } else {
-                            ChipDefaults.chipColors()
+                            ChipDefaults.secondaryChipColors()
                         }
                     )
                 }
