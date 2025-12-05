@@ -73,9 +73,11 @@ class TimesignalScheduler(
             .withSecond(0)
             .withNano(0)
         
-        // If candidate is in the current minute or in the past, schedule for next hour
-        // This handles the edge case where we're at any second within the target minute
-        if (candidate.minute == truncatedTime.minute || !candidate.isAfter(fromTime)) {
+        // Schedule for next hour if:
+        // 1. We're currently in the target minute (candidate.minute == truncatedTime.minute)
+        //    This prevents scheduling an alarm for the current minute we're already in
+        // 2. The candidate time is not after the current time (in the past or present)
+        if (candidate.minute == truncatedTime.minute || candidate.isBefore(fromTime) || candidate.equals(fromTime)) {
             candidate = candidate.plusHours(1)
         }
         return candidate
