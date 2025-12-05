@@ -66,11 +66,16 @@ class TimesignalScheduler(
     }
 
     private fun calculateNextTrigger(slot: QuarterSlot, fromTime: ZonedDateTime): ZonedDateTime {
-        var candidate = fromTime.truncatedTo(ChronoUnit.MINUTES)
+        // Calculate the candidate time based on the truncated fromTime
+        val truncatedTime = fromTime.truncatedTo(ChronoUnit.MINUTES)
+        var candidate = truncatedTime
             .withMinute(slot.minute)
             .withSecond(0)
             .withNano(0)
-        if (!candidate.isAfter(fromTime)) {
+        
+        // If candidate is in the current minute or in the past, schedule for next hour
+        // This handles the edge case where we're at any second within the target minute
+        if (candidate.minute == truncatedTime.minute || !candidate.isAfter(fromTime)) {
             candidate = candidate.plusHours(1)
         }
         return candidate
