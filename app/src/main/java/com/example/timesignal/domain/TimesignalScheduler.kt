@@ -43,11 +43,12 @@ class TimesignalScheduler(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        alarmManager?.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            nextTrigger.toInstant().toEpochMilli(),
-            pendingIntent,
-        )
+        // Use setAlarmClock to ensure the alarm fires exactly on time, even in doze mode.
+        // This is appropriate for time signals as they are user-facing and time-sensitive.
+        // setAlarmClock wakes the device from doze mode and fires at the exact scheduled time.
+        val triggerTimeMillis = nextTrigger.toInstant().toEpochMilli()
+        val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerTimeMillis, pendingIntent)
+        alarmManager?.setAlarmClock(alarmClockInfo, pendingIntent)
     }
 
     fun cancelAll() {
