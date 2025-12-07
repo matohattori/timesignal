@@ -43,11 +43,12 @@ class TimesignalScheduler(
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
 
-        alarmManager?.setExactAndAllowWhileIdle(
-            AlarmManager.RTC_WAKEUP,
-            nextTrigger.toInstant().toEpochMilli(),
-            pendingIntent,
-        )
+        // Use setAlarmClock to ensure the alarm fires exactly on time, even in doze mode.
+        // This is appropriate for time signals as they are user-facing and time-sensitive.
+        // setAlarmClock wakes the device from doze mode and fires at the exact scheduled time.
+        val triggerTimeMillis = nextTrigger.toInstant().toEpochMilli()
+        val alarmClockInfo = AlarmManager.AlarmClockInfo(triggerTimeMillis, pendingIntent)
+        alarmManager?.setAlarmClock(alarmClockInfo, pendingIntent)
     }
 
     fun cancelAll() {
@@ -66,18 +67,11 @@ class TimesignalScheduler(
     }
 
     private fun calculateNextTrigger(slot: QuarterSlot, fromTime: ZonedDateTime): ZonedDateTime {
-        // Calculate the candidate time based on the truncated fromTime
-        val truncatedTime = fromTime.truncatedTo(ChronoUnit.MINUTES)
-        var candidate = truncatedTime
+        var candidate = fromTime.truncatedTo(ChronoUnit.MINUTES)
             .withMinute(slot.minute)
             .withSecond(0)
             .withNano(0)
-        
-        // Schedule for next hour if:
-        // 1. We're currently in the target minute (candidate.minute == truncatedTime.minute)
-        //    This prevents scheduling an alarm for the current minute we're already in
-        // 2. The candidate time is not after the current time (in the past or present)
-        if (candidate.minute == truncatedTime.minute || candidate.isBefore(fromTime) || candidate.equals(fromTime)) {
+        if (!candidate.isAfter(fromTime)) {
             candidate = candidate.plusHours(1)
         }
         return candidate
